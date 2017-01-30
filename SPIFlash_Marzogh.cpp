@@ -1,8 +1,8 @@
-/* Arduino SPIFlash Library v.2.5.0
+/* Arduino SPIFlash_Marzogh Library v.2.5.0
  * Copyright (C) 2015 by Prajwal Bhattaram
  * Modified by Prajwal Bhattaram - 14/11/2016
  *
- * This file is part of the Arduino SPIFlash Library. This library is for
+ * This file is part of the Arduino SPIFlash_Marzogh Library. This library is for
  * Winbond NOR flash memory modules. In its current form it enables reading
  * and writing individual data variables, structs and arrays from and to various locations;
  * reading and writing pages; continuous read functions; sector, block and chip erase;
@@ -19,11 +19,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License v3.0
- * along with the Arduino SPIFlash Library.  If not, see
+ * along with the Arduino SPIFlash_Marzogh Library.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "SPIFlash.h"
+#include "SPIFlash_Marzogh.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //     Uncomment the code below to run a diagnostic if your flash 	  //
@@ -31,7 +31,7 @@
 //                                                                    //
 //      Error codes will be generated and returned on functions       //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//#define RUNDIAGNOSTIC                                               //
+#define RUNDIAGNOSTIC                                               //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //   Uncomment the code below to increase the speed of the library    //
@@ -44,7 +44,7 @@
 
 // Constructor
 #if defined (ARDUINO_ARCH_AVR)
-SPIFlash::SPIFlash(uint8_t cs, bool overflow) {
+SPIFlash_Marzogh::SPIFlash_Marzogh(uint8_t cs, bool overflow) {
   csPin = cs;
 #ifndef __AVR_ATtiny85__
   cs_port = portOutputRegister(digitalPinToPort(csPin));
@@ -54,7 +54,7 @@ SPIFlash::SPIFlash(uint8_t cs, bool overflow) {
   pinMode(csPin, OUTPUT);
 }
 #elif defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_SAMD) || defined (ARDUINO_ARCH_SAM)
-SPIFlash::SPIFlash(uint8_t cs, bool overflow) {
+SPIFlash_Marzogh::SPIFlash_Marzogh(uint8_t cs, bool overflow) {
   csPin = cs;
   pageOverflow = overflow;
   pinMode(csPin, OUTPUT);
@@ -66,7 +66,7 @@ SPIFlash::SPIFlash(uint8_t cs, bool overflow) {
 
 //Double checks all parameters before calling a read or write. Comes in two variants
 //Variant A: Takes address and returns the address if true, else returns false. Throws an error if there is a problem.
-bool SPIFlash::_prep(uint8_t opcode, uint32_t address, uint32_t size) {
+bool SPIFlash_Marzogh::_prep(uint8_t opcode, uint32_t address, uint32_t size) {
   switch (opcode) {
     case PAGEPROG:
     if (!_addressCheck(address, size)) {
@@ -96,19 +96,20 @@ bool SPIFlash::_prep(uint8_t opcode, uint32_t address, uint32_t size) {
 }
 
 //Variant B: Take the opcode, page number, offset and size of data block as arguments
-bool SPIFlash::_prep(uint8_t opcode, uint32_t page_number, uint8_t offset, uint32_t size) {
+bool SPIFlash_Marzogh::_prep(uint8_t opcode, uint32_t page_number, uint8_t offset, uint32_t size) {
   uint32_t address = _getAddress(page_number, offset);
   return _prep(opcode, address, size);
 }
 
-bool SPIFlash::_transferAddress(void) {
+bool SPIFlash_Marzogh::_transferAddress(void) {
   _nextByte(_currentAddress >> 16);
   _nextByte(_currentAddress >> 8);
   _nextByte(_currentAddress);
 }
 
-bool SPIFlash::_startSPIBus(void) {
+bool SPIFlash_Marzogh::_startSPIBus(void) {
 #ifndef SPI_HAS_TRANSACTION
+    Serial.println("Has Transaction");
     noInterrupts();
 #endif
   //save current SPI settings
@@ -121,6 +122,7 @@ bool SPIFlash::_startSPIBus(void) {
   _dueSPIInit(DUE_SPI_CLK);
 #else
   #ifdef SPI_HAS_TRANSACTION
+    // Serial.println("flash - Begin SPI Transaction");
     SPI.beginTransaction(_settings);
   #else
     SPI.setDataMode(SPI_MODE0);
@@ -131,9 +133,9 @@ bool SPIFlash::_startSPIBus(void) {
 }
 
 //Initiates SPI operation - but data is not transferred yet. Always call _prep() before this function (especially when it involves writing or reading to/from an address)
-bool SPIFlash::_beginSPI(uint8_t opcode) {
+bool SPIFlash_Marzogh::_beginSPI(uint8_t opcode) {
   if (!SPIBusState) {
-    //Serial.println("Starting SPI Bus");
+    // Serial.println("Starting SPI Bus");
     _startSPIBus();
   }
   CHIP_SELECT
@@ -163,7 +165,7 @@ bool SPIFlash::_beginSPI(uint8_t opcode) {
 //SPI data lines are left open until _endSPI() is called
 
 //Reads/Writes next byte. Call 'n' times to read/write 'n' number of bytes. Should be called after _beginSPI()
-uint8_t SPIFlash::_nextByte(uint8_t data) {
+uint8_t SPIFlash_Marzogh::_nextByte(uint8_t data) {
 #if defined (ARDUINO_ARCH_SAM)
   return _dueSPITransfer(data);
 #else
@@ -172,13 +174,13 @@ uint8_t SPIFlash::_nextByte(uint8_t data) {
 }
 
 //Reads/Writes next int. Call 'n' times to read/write 'n' number of bytes. Should be called after _beginSPI()
-uint16_t SPIFlash::_nextInt(uint16_t data) {
+uint16_t SPIFlash_Marzogh::_nextInt(uint16_t data) {
   //return xfer16(data);
   SPI.transfer16(data);
 }
 
 //Reads/Writes next data buffer. Call 'n' times to read/write 'n' number of bytes. Should be called after _beginSPI()
-void SPIFlash::_nextBuf(uint8_t opcode, uint8_t *data_buffer, uint32_t size) {
+void SPIFlash_Marzogh::_nextBuf(uint8_t opcode, uint8_t *data_buffer, uint32_t size) {
   uint8_t *_dataAddr = &(*data_buffer);
   switch (opcode) {
     case READDATA:
@@ -210,9 +212,10 @@ void SPIFlash::_nextBuf(uint8_t opcode, uint8_t *data_buffer, uint32_t size) {
 }
 
 //Stops all operations. Should be called after all the required data is read/written from repeated _nextByte() calls
-void SPIFlash::_endSPI(void) {
+void SPIFlash_Marzogh::_endSPI(void) {
   CHIP_DESELECT
   #ifdef SPI_HAS_TRANSACTION
+  // Serial.println("flash - End SPI Transaction");
   SPI.endTransaction();
   #else
   interrupts();
@@ -226,16 +229,16 @@ void SPIFlash::_endSPI(void) {
 }
 
 // Checks if status register 1 can be accessed - used during powerdown and power up and for debugging
-uint8_t SPIFlash::_readStat1(void) {
+uint8_t SPIFlash_Marzogh::_readStat1(void) {
 	_beginSPI(READSTAT1);
   uint8_t stat1 = _nextByte();
-  //_endSPI();
+  _endSPI(); //kina
   CHIP_DESELECT
 	return stat1;
 }
 
 // Checks if status register 2 can be accessed, if yes, reads and returns it
-uint8_t SPIFlash::_readStat2(void) {
+uint8_t SPIFlash_Marzogh::_readStat2(void) {
   _beginSPI(READSTAT2);
   uint8_t stat2 = _nextByte();
   _endSPI();
@@ -243,7 +246,7 @@ uint8_t SPIFlash::_readStat2(void) {
 }
 
 // Checks the erase/program suspend flag before enabling/disabling a program/erase suspend operation
-bool SPIFlash::_noSuspend(void) {
+bool SPIFlash_Marzogh::_noSuspend(void) {
 	if(_readStat2() & SUS) {
     errorcode = NOSUSPEND;
 		return false;
@@ -252,7 +255,7 @@ bool SPIFlash::_noSuspend(void) {
 }
 
 // Polls the status register 1 until busy flag is cleared or timeout
-bool SPIFlash::_notBusy(uint32_t timeout) {
+bool SPIFlash_Marzogh::_notBusy(uint32_t timeout) {
 	uint32_t startTime = millis();
 
 	do {
@@ -269,12 +272,12 @@ bool SPIFlash::_notBusy(uint32_t timeout) {
 }
 
 //Enables writing to chip by setting the WRITEENABLE bit
-bool SPIFlash::_writeEnable(uint32_t timeout) {
+bool SPIFlash_Marzogh::_writeEnable(uint32_t timeout) {
   uint32_t startTime = millis();
   if (!(state & WRTEN)) {
     do {
       _beginSPI(WRITEENABLE);
-      //_endSPI();
+      // _endSPI(); //kina
       CHIP_DESELECT
       state = _readStat1();
       if((millis()-startTime) > timeout) {
@@ -294,7 +297,7 @@ bool SPIFlash::_writeEnable(uint32_t timeout) {
 // i.e. to write disable state:
 // Power-up, Write Disable, Page Program, Quad Page Program, Sector Erase, Block Erase, Chip Erase, Write Status Register,
 // Erase Security Register and Program Security register
-bool SPIFlash::_writeDisable(void) {
+bool SPIFlash_Marzogh::_writeDisable(void) {
 	_beginSPI(WRITEDISABLE);
   _endSPI();
 	return true;
@@ -303,13 +306,13 @@ bool SPIFlash::_writeDisable(void) {
 //Gets address from page number and offset. Takes two arguments:
 // 1. page_number --> Any page number from 0 to maxPage
 // 2. offset --> Any offset within the page - from 0 to 255
-uint32_t SPIFlash::_getAddress(uint16_t page_number, uint8_t offset) {
+uint32_t SPIFlash_Marzogh::_getAddress(uint16_t page_number, uint8_t offset) {
 	uint32_t address = page_number;
 	return ((address << 8) + offset);
 }
 
 //Checks the device ID to establish storage parameters
-bool SPIFlash::_getManId(uint8_t *b1, uint8_t *b2) {
+bool SPIFlash_Marzogh::_getManId(uint8_t *b1, uint8_t *b2) {
 	if(!_notBusy())
 		return false;
 	_beginSPI(MANID);
@@ -323,7 +326,7 @@ bool SPIFlash::_getManId(uint8_t *b1, uint8_t *b2) {
 }
 
 //Checks for presence of chip by requesting JEDEC ID
-bool SPIFlash::_getJedecId(uint8_t *b1, uint8_t *b2, uint8_t *b3) {
+bool SPIFlash_Marzogh::_getJedecId(uint8_t *b1, uint8_t *b2, uint8_t *b3) {
   if(!_notBusy())
   	return false;
   _beginSPI(JEDECID);
@@ -335,7 +338,7 @@ bool SPIFlash::_getJedecId(uint8_t *b1, uint8_t *b2, uint8_t *b3) {
 }
 
 //Identifies the chip
-bool SPIFlash::_chipID(void) {
+bool SPIFlash_Marzogh::_chipID(void) {
 	//Get Manfucturer/Device ID so the library can identify the chip
     uint8_t manID, capID, devID ;
     //_getManId(&manID, &devID);
@@ -387,7 +390,7 @@ bool SPIFlash::_chipID(void) {
 
 //Checks to see if pageOverflow is permitted and assists with determining next address to read/write.
 //Sets the global address variable
-bool SPIFlash::_addressCheck(uint32_t address, uint32_t size) {
+bool SPIFlash_Marzogh::_addressCheck(uint32_t address, uint32_t size) {
 	if (capacity == 0) {
     errorcode = CALLBEGIN;
     #ifdef RUNDIAGNOSTIC
@@ -414,7 +417,7 @@ bool SPIFlash::_addressCheck(uint32_t address, uint32_t size) {
   return true;				// Not at end of memory if (address < capacity)
 }
 
-bool SPIFlash::_notPrevWritten(uint32_t address, uint32_t size) {
+bool SPIFlash_Marzogh::_notPrevWritten(uint32_t address, uint32_t size) {
   //_prep(READDATA, address, size);
   _beginSPI(READDATA);
   for (uint16_t i = 0; i < size; i++) {
@@ -423,14 +426,14 @@ bool SPIFlash::_notPrevWritten(uint32_t address, uint32_t size) {
       return false;
     }
   }
-  //_endSPI();
+  // _endSPI(); //kina
   CHIP_DESELECT
   return true;
 }
 
 #ifdef RUNDIAGNOSTIC
 //Troubleshooting function. Called when #ifdef RUNDIAGNOSTIC is uncommented at the top of this file.
-void SPIFlash::_troubleshoot(void) {
+void SPIFlash_Marzogh::_troubleshoot(void) {
 
 	switch (errorcode) {
 		case SUCCESS:
@@ -457,7 +460,7 @@ void SPIFlash::_troubleshoot(void) {
 		Serial.println(UNKNOWNCHIP, HEX);
 		#else
 		Serial.println("Unable to identify chip. Are you sure this is a Winbond Flash chip");
- 		Serial.println("Please raise an issue at http://www.github.com/Marzogh/SPIFlash/issues with your chip type and I will try to add support to your chip");
+ 		Serial.println("Please raise an issue at http://www.github.com/Marzogh/SPIFlash_Marzogh/issues with your chip type and I will try to add support to your chip");
 		#endif
 
 		break;
@@ -468,7 +471,7 @@ void SPIFlash::_troubleshoot(void) {
 		Serial.println(UNKNOWNCAP, HEX);
 		#else
  		Serial.println("Unable to identify capacity.");
- 		Serial.println("Please raise an issue at http://www.github.com/Marzogh/SPIFlash/issues with your chip type and I will work on adding support to your chip");
+ 		Serial.println("Please raise an issue at http://www.github.com/Marzogh/SPIFlash_Marzogh/issues with your chip type and I will work on adding support to your chip");
 		#endif
 		break;
 
@@ -480,7 +483,7 @@ void SPIFlash::_troubleshoot(void) {
  		Serial.println("Chip is busy.");
  		Serial.println("Make sure all pins have been connected properly");
  		Serial.print("If it still doesn't work, ");
- 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash/issues with the details of what your were doing when this error occurred");
+ 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash_Marzogh/issues with the details of what your were doing when this error occurred");
 		#endif
 		break;
 
@@ -501,7 +504,7 @@ void SPIFlash::_troubleshoot(void) {
  		Serial.println("Unable to Enable Writing to chip.");
  		Serial.println("Please make sure the HOLD & WRITEPROTECT pins are connected properly to VCC & GND respectively");
  		Serial.print("If you are still facing issues, ");
- 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash/issues with the details of what your were doing when this error occurred");
+ 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash_Marzogh/issues with the details of what your were doing when this error occurred");
 		#endif
 		break;
 
@@ -513,7 +516,7 @@ void SPIFlash::_troubleshoot(void) {
  		Serial.println("This sector already contains data.");
  		Serial.println("Please make sure the sectors being written to are erased.");
  		Serial.print("If you are still facing issues, ");
- 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash/issues with the details of what your were doing when this error occurred");
+ 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash_Marzogh/issues with the details of what your were doing when this error occurred");
 		#endif
 		break;
 
@@ -528,7 +531,7 @@ void SPIFlash::_troubleshoot(void) {
     Serial.println(_dueFreeRAM());
     #endif
   Serial.print("If you are still facing issues, ");
- 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash/issues with the details of what your were doing when this error occurred");
+ 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash_Marzogh/issues with the details of what your were doing when this error occurred");
 		#endif
 		break;
 
@@ -539,7 +542,7 @@ void SPIFlash::_troubleshoot(void) {
 		#else
  		Serial.println("Unable to suspend operation.");
     Serial.print("If you are unable to resolve this problem, ");
- 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash/issues with the details of what your were doing when this error occurred");
+ 		Serial.println("please raise an issue at http://www.github.com/Marzogh/SPIFlash_Marzogh/issues with the details of what your were doing when this error occurred");
 		#endif
 		break;
 
@@ -549,7 +552,7 @@ void SPIFlash::_troubleshoot(void) {
 		Serial.println(UNKNOWNERROR, HEX);
 		#else
 		Serial.println("Unknown error");
- 		Serial.println("Please raise an issue at http://www.github.com/Marzogh/SPIFlash/issues with the details of what your were doing when this error occurred");
+ 		Serial.println("Please raise an issue at http://www.github.com/Marzogh/SPIFlash_Marzogh/issues with the details of what your were doing when this error occurred");
 		#endif
 		break;
 	}
@@ -561,7 +564,7 @@ void SPIFlash::_troubleshoot(void) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 //Identifies chip and establishes parameters
-void SPIFlash::begin(void) {
+void SPIFlash_Marzogh::begin(void) {
 #if defined (ARDUINO_ARCH_SAM)
   _dueSPIBegin();
 #else
@@ -578,33 +581,33 @@ void SPIFlash::begin(void) {
 //Allows the setting of a custom clock speed for the SPI bus to communicate with the chip.
 //Only works if the SPI library in use supports SPI Transactions
 #ifdef SPI_HAS_TRANSACTION
-void SPIFlash::setClock(uint32_t clockSpeed) {
+void SPIFlash_Marzogh::setClock(uint32_t clockSpeed) {
   _settings = SPISettings(clockSpeed, MSBFIRST, SPI_MODE0);
 }
 #endif
 
-uint8_t SPIFlash::error(void) {
+uint8_t SPIFlash_Marzogh::error(void) {
 	return errorcode;
 }
 
 //Returns capacity of chip
-uint32_t SPIFlash::getCapacity(void) {
+uint32_t SPIFlash_Marzogh::getCapacity(void) {
 	return capacity;
 }
 
 //Returns maximum number of pages
-uint32_t SPIFlash::getMaxPage(void) {
+uint32_t SPIFlash_Marzogh::getMaxPage(void) {
 	return maxPage;
 }
 
 
 //Returns identifying name of the chip
-uint16_t SPIFlash::getChipName(void) {
+uint16_t SPIFlash_Marzogh::getChipName(void) {
 	return name;
 }
 
 //Returns the library version as a string
-bool SPIFlash::libver(uint8_t *b1, uint8_t *b2, uint8_t *b3) {
+bool SPIFlash_Marzogh::libver(uint8_t *b1, uint8_t *b2, uint8_t *b3) {
   *b1 = LIBVER;
   *b2 = LIBSUBVER;
   *b3 = BUGFIXVER;
@@ -612,7 +615,7 @@ bool SPIFlash::libver(uint8_t *b1, uint8_t *b2, uint8_t *b3) {
 }
 
 //Checks for and initiates the chip by requesting the Manufacturer ID which is returned as a 16 bit int
-uint16_t SPIFlash::getManID(void) {
+uint16_t SPIFlash_Marzogh::getManID(void) {
 	uint8_t b1, b2;
     _getManId(&b1, &b2);
     uint32_t id = b1;
@@ -621,7 +624,7 @@ uint16_t SPIFlash::getManID(void) {
 }
 
 //Checks for and initiates the chip by requesting JEDEC ID which is returned as a 32 bit int
-uint32_t SPIFlash::getJEDECID(void) {
+uint32_t SPIFlash_Marzogh::getJEDECID(void) {
 	uint8_t b1, b2, b3;
     _getJedecId(&b1, &b2, &b3);
     uint32_t id = b1;
@@ -635,7 +638,7 @@ uint32_t SPIFlash::getJEDECID(void) {
 //	B. Takes a three variables, the size of the data and two other variables to return a page number value & an offset into.
 // All addresses in the in the sketch must be obtained via this function or not at all.
 // Variant A
-uint32_t SPIFlash::getAddress(uint16_t size) {
+uint32_t SPIFlash_Marzogh::getAddress(uint16_t size) {
 	if (!_addressCheck(currentAddress, size)){
     errorcode = OUTOFBOUNDS;
     #ifdef RUNDIAGNOSTIC
@@ -645,14 +648,15 @@ uint32_t SPIFlash::getAddress(uint16_t size) {
 	}
 	else {
 		uint32_t address = currentAddress;
-		/*Serial.print("Current Address: ");
-		Serial.println(currentAddress);*/
+    //Kina Let this Loose
+		// Serial.print("Current Address: ");
+		// Serial.println(currentAddress);
 		currentAddress+=size;
 		return address;
 	}
 }
 // Variant B
-bool SPIFlash::getAddress(uint16_t size, uint16_t &page_number, uint8_t &offset) {
+bool SPIFlash_Marzogh::getAddress(uint16_t size, uint16_t &page_number, uint8_t &offset) {
 	uint32_t address = getAddress(size);
 	offset = (address >> 0);
 	page_number = (address >> 8);
@@ -660,7 +664,7 @@ bool SPIFlash::getAddress(uint16_t size, uint16_t &page_number, uint8_t &offset)
 }
 
 //Function for returning the size of the string (only to be used for the getAddress() function)
-uint16_t SPIFlash::sizeofStr(String &inputStr) {
+uint16_t SPIFlash_Marzogh::sizeofStr(String &inputStr) {
 	//uint16_t inStrLen = inputStr.length() + 1;
 	uint16_t size;
 
@@ -683,7 +687,7 @@ uint16_t SPIFlash::sizeofStr(String &inputStr) {
 //  	2. offset --> Any offset within the page - from 0 to 255
 //		3. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-uint8_t SPIFlash::readByte(uint32_t address, bool fastRead) {
+uint8_t SPIFlash_Marzogh::readByte(uint32_t address, bool fastRead) {
   uint8_t data;
 
 	if (!_prep(READDATA, address, sizeof(data))) {
@@ -706,7 +710,7 @@ uint8_t SPIFlash::readByte(uint32_t address, bool fastRead) {
   return data;
 }
 // Variant B
-uint8_t SPIFlash::readByte(uint16_t page_number, uint8_t offset, bool fastRead) {
+uint8_t SPIFlash_Marzogh::readByte(uint16_t page_number, uint8_t offset, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readByte(address, fastRead);
@@ -722,7 +726,7 @@ uint8_t SPIFlash::readByte(uint16_t page_number, uint8_t offset, bool fastRead) 
 //  	2. offset --> Any offset within the page - from 0 to 255
 //		3. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-int8_t SPIFlash::readChar(uint32_t address, bool fastRead) {
+int8_t SPIFlash_Marzogh::readChar(uint32_t address, bool fastRead) {
 	int8_t data;
 	if (!_prep(READDATA, address, sizeof(data))) {
 		return false;
@@ -744,7 +748,7 @@ int8_t SPIFlash::readChar(uint32_t address, bool fastRead) {
   return data;
 }
 // Variant B
-int8_t SPIFlash::readChar(uint16_t page_number, uint8_t offset, bool fastRead) {
+int8_t SPIFlash_Marzogh::readChar(uint16_t page_number, uint8_t offset, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readChar(address, fastRead);
@@ -761,7 +765,7 @@ int8_t SPIFlash::readChar(uint16_t page_number, uint8_t offset, bool fastRead) {
 //		3. data_buffer --> The array of bytes to be read from the flash memory - starting at the offset on the page indicated
 //		4. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-bool  SPIFlash::readByteArray(uint32_t address, uint8_t *data_buffer, uint16_t bufferSize, bool fastRead) {
+bool  SPIFlash_Marzogh::readByteArray(uint32_t address, uint8_t *data_buffer, uint16_t bufferSize, bool fastRead) {
 	if (!_prep(READDATA, address, bufferSize)) {
     return false;
 	}
@@ -776,7 +780,7 @@ bool  SPIFlash::readByteArray(uint32_t address, uint8_t *data_buffer, uint16_t b
 	return true;
 }
 // Variant B
-bool  SPIFlash::readByteArray(uint16_t page_number, uint8_t offset, uint8_t *data_buffer, uint16_t bufferSize, bool fastRead) {
+bool  SPIFlash_Marzogh::readByteArray(uint16_t page_number, uint8_t offset, uint8_t *data_buffer, uint16_t bufferSize, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readByteArray(address, data_buffer, bufferSize, fastRead);
@@ -793,7 +797,7 @@ bool  SPIFlash::readByteArray(uint16_t page_number, uint8_t offset, uint8_t *dat
 //		3. data_buffer --> The array of bytes to be read from the flash memory - starting at the offset on the page indicated
 //		4. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-bool  SPIFlash::readCharArray(uint32_t address, char *data_buffer, uint16_t bufferSize, bool fastRead) {
+bool  SPIFlash_Marzogh::readCharArray(uint32_t address, char *data_buffer, uint16_t bufferSize, bool fastRead) {
   if (!_prep(READDATA, address, bufferSize)) {
     return false;
 	}
@@ -808,7 +812,7 @@ bool  SPIFlash::readCharArray(uint32_t address, char *data_buffer, uint16_t buff
 	return true;
 }
 // Variant B
-bool  SPIFlash::readCharArray(uint16_t page_number, uint8_t offset, char *data_buffer, uint16_t bufferSize, bool fastRead) {
+bool  SPIFlash_Marzogh::readCharArray(uint16_t page_number, uint8_t offset, char *data_buffer, uint16_t bufferSize, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readCharArray(address, data_buffer, bufferSize, fastRead);
@@ -824,7 +828,7 @@ bool  SPIFlash::readCharArray(uint16_t page_number, uint8_t offset, char *data_b
 //  	2. offset --> Any offset within the page - from 0 to 255
 //		3. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-uint16_t SPIFlash::readWord(uint32_t address, bool fastRead) {
+uint16_t SPIFlash_Marzogh::readWord(uint32_t address, bool fastRead) {
   const uint8_t size = sizeof(uint16_t);
 	union
 	{
@@ -851,7 +855,7 @@ uint16_t SPIFlash::readWord(uint32_t address, bool fastRead) {
   return data.I;
 }
 // Variant B
-uint16_t SPIFlash::readWord(uint16_t page_number, uint8_t offset, bool fastRead) {
+uint16_t SPIFlash_Marzogh::readWord(uint16_t page_number, uint8_t offset, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readWord(address, fastRead);
@@ -867,7 +871,7 @@ uint16_t SPIFlash::readWord(uint16_t page_number, uint8_t offset, bool fastRead)
 //  	2. offset --> Any offset within the page - from 0 to 255
 //		3. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-int16_t SPIFlash::readShort(uint32_t address, bool fastRead) {
+int16_t SPIFlash_Marzogh::readShort(uint32_t address, bool fastRead) {
   const uint8_t size = sizeof(int16_t);
 	union
 	{
@@ -895,7 +899,7 @@ int16_t SPIFlash::readShort(uint32_t address, bool fastRead) {
   return data.s;
 }
 // Variant B
-int16_t SPIFlash::readShort(uint16_t page_number, uint8_t offset, bool fastRead) {
+int16_t SPIFlash_Marzogh::readShort(uint16_t page_number, uint8_t offset, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readShort(address, fastRead);
@@ -911,7 +915,7 @@ int16_t SPIFlash::readShort(uint16_t page_number, uint8_t offset, bool fastRead)
 //  	2. offset --> Any offset within the page - from 0 to 255
 //		3. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-uint32_t SPIFlash::readULong(uint32_t address, bool fastRead) {
+uint32_t SPIFlash_Marzogh::readULong(uint32_t address, bool fastRead) {
   const uint8_t size = (sizeof(uint32_t));
 	union
 	{
@@ -939,7 +943,7 @@ uint32_t SPIFlash::readULong(uint32_t address, bool fastRead) {
   return data.l;
 }
 // Variant B
-uint32_t SPIFlash::readULong(uint16_t page_number, uint8_t offset, bool fastRead) {
+uint32_t SPIFlash_Marzogh::readULong(uint16_t page_number, uint8_t offset, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readULong(address, fastRead);
@@ -955,7 +959,7 @@ uint32_t SPIFlash::readULong(uint16_t page_number, uint8_t offset, bool fastRead
 //  	2. offset --> Any offset within the page - from 0 to 255
 //		3. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-int32_t SPIFlash::readLong(uint32_t address, bool fastRead) {
+int32_t SPIFlash_Marzogh::readLong(uint32_t address, bool fastRead) {
   const uint8_t size = (sizeof(int32_t));
 	union
 	{
@@ -983,7 +987,7 @@ int32_t SPIFlash::readLong(uint32_t address, bool fastRead) {
   return data.l;
 }
 // Variant B
-int32_t SPIFlash::readLong(uint16_t page_number, uint8_t offset, bool fastRead) {
+int32_t SPIFlash_Marzogh::readLong(uint16_t page_number, uint8_t offset, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readLong(address, fastRead);
@@ -999,7 +1003,7 @@ int32_t SPIFlash::readLong(uint16_t page_number, uint8_t offset, bool fastRead) 
 //  	2. offset --> Any offset within the page - from 0 to 255
 //		3. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-float SPIFlash::readFloat(uint32_t address, bool fastRead) {
+float SPIFlash_Marzogh::readFloat(uint32_t address, bool fastRead) {
   const uint8_t size = (sizeof(float));
 	union
 	{
@@ -1028,7 +1032,7 @@ float SPIFlash::readFloat(uint32_t address, bool fastRead) {
   return data.f;
 }
 // Variant B
-float SPIFlash::readFloat(uint16_t page_number, uint8_t offset, bool fastRead) {
+float SPIFlash_Marzogh::readFloat(uint16_t page_number, uint8_t offset, bool fastRead) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return readFloat(address, fastRead);
@@ -1048,7 +1052,7 @@ float SPIFlash::readFloat(uint16_t page_number, uint8_t offset, bool fastRead) {
 // This function first reads a short from the address to figure out the size of the String object stored and
 // then reads the String object data
 // Variant A
-bool SPIFlash::readStr(uint32_t address, String &outStr, bool fastRead) {
+bool SPIFlash_Marzogh::readStr(uint32_t address, String &outStr, bool fastRead) {
   uint16_t strLen;
   //_delay_us(20);
   strLen = readWord(address);
@@ -1061,7 +1065,7 @@ bool SPIFlash::readStr(uint32_t address, String &outStr, bool fastRead) {
   return true;
 }
 // Variant B
-bool SPIFlash::readStr(uint16_t page_number, uint8_t offset, String &outStr, bool fastRead) {
+bool SPIFlash_Marzogh::readStr(uint16_t page_number, uint8_t offset, String &outStr, bool fastRead) {
   uint32_t address = _getAddress(page_number, offset);
   return readStr(address, outStr, fastRead);
 }
@@ -1080,7 +1084,7 @@ bool SPIFlash::readStr(uint16_t page_number, uint8_t offset, String &outStr, boo
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeByte(uint32_t address, uint8_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeByte(uint32_t address, uint8_t data, bool errorCheck) {
   if(!_prep(PAGEPROG, address, sizeof(data))) {
     return false;
   }
@@ -1098,7 +1102,7 @@ bool SPIFlash::writeByte(uint32_t address, uint8_t data, bool errorCheck) {
   }
 }
 // Variant B
-bool SPIFlash::writeByte(uint16_t page_number, uint8_t offset, uint8_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeByte(uint16_t page_number, uint8_t offset, uint8_t data, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeByte(address, data, errorCheck);
@@ -1118,7 +1122,7 @@ bool SPIFlash::writeByte(uint16_t page_number, uint8_t offset, uint8_t data, boo
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeChar(uint32_t address, int8_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeChar(uint32_t address, int8_t data, bool errorCheck) {
   if(!_prep(PAGEPROG, address, sizeof(data))) {
     return false;
   }
@@ -1136,7 +1140,7 @@ bool SPIFlash::writeChar(uint32_t address, int8_t data, bool errorCheck) {
   }
 }
 // Variant B
-bool SPIFlash::writeChar(uint16_t page_number, uint8_t offset, int8_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeChar(uint16_t page_number, uint8_t offset, int8_t data, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeChar(address, data, errorCheck);
@@ -1156,7 +1160,7 @@ bool SPIFlash::writeChar(uint16_t page_number, uint8_t offset, int8_t data, bool
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeByteArray(uint32_t address, uint8_t *data_buffer, uint16_t bufferSize, bool errorCheck) {
+bool SPIFlash_Marzogh::writeByteArray(uint32_t address, uint8_t *data_buffer, uint16_t bufferSize, bool errorCheck) {
   if (!_prep(PAGEPROG, address, bufferSize)) {
     return false;
   }
@@ -1207,7 +1211,7 @@ bool SPIFlash::writeByteArray(uint32_t address, uint8_t *data_buffer, uint16_t b
   }
 }
 // Variant B
-bool SPIFlash::writeByteArray(uint16_t page_number, uint8_t offset, uint8_t *data_buffer, uint16_t bufferSize, bool errorCheck) {
+bool SPIFlash_Marzogh::writeByteArray(uint16_t page_number, uint8_t offset, uint8_t *data_buffer, uint16_t bufferSize, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeByteArray(address, data_buffer, bufferSize, errorCheck);
@@ -1227,7 +1231,7 @@ bool SPIFlash::writeByteArray(uint16_t page_number, uint8_t offset, uint8_t *dat
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeCharArray(uint32_t address, char *data_buffer, uint16_t bufferSize, bool errorCheck) {
+bool SPIFlash_Marzogh::writeCharArray(uint32_t address, char *data_buffer, uint16_t bufferSize, bool errorCheck) {
   uint16_t writeBufSz;
   uint16_t maxBytes = PAGESIZE-(address % PAGESIZE);  // Force the first set of bytes to stay within the first page
   uint16_t data_offset = 0;
@@ -1281,7 +1285,7 @@ bool SPIFlash::writeCharArray(uint32_t address, char *data_buffer, uint16_t buff
   }
 }
 // Variant B
-bool SPIFlash::writeCharArray(uint16_t page_number, uint8_t offset, char *data_buffer, uint16_t bufferSize, bool errorCheck) {
+bool SPIFlash_Marzogh::writeCharArray(uint16_t page_number, uint8_t offset, char *data_buffer, uint16_t bufferSize, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeCharArray(address, data_buffer, bufferSize, errorCheck);
@@ -1301,7 +1305,7 @@ bool SPIFlash::writeCharArray(uint16_t page_number, uint8_t offset, char *data_b
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeWord(uint32_t address, uint16_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeWord(uint32_t address, uint16_t data, bool errorCheck) {
   const uint8_t size = sizeof(uint16_t);
 
 	if(!_prep(PAGEPROG, address, size)) {
@@ -1353,7 +1357,7 @@ bool SPIFlash::writeWord(uint32_t address, uint16_t data, bool errorCheck) {
 		return _writeErrorCheck(address, data);
 }
 // Variant B
-bool SPIFlash::writeWord(uint16_t page_number, uint8_t offset, uint16_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeWord(uint16_t page_number, uint8_t offset, uint16_t data, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeWord(address, data, errorCheck);
@@ -1373,7 +1377,7 @@ bool SPIFlash::writeWord(uint16_t page_number, uint8_t offset, uint16_t data, bo
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeShort(uint32_t address, int16_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeShort(uint32_t address, int16_t data, bool errorCheck) {
   const uint8_t size = sizeof(data);
 	if(!_prep(PAGEPROG, address, size)) {
     return false;
@@ -1424,7 +1428,7 @@ bool SPIFlash::writeShort(uint32_t address, int16_t data, bool errorCheck) {
 		return _writeErrorCheck(address, data);
 }
 // Variant B
-bool SPIFlash::writeShort(uint16_t page_number, uint8_t offset, int16_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeShort(uint16_t page_number, uint8_t offset, int16_t data, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeShort(address, data, errorCheck);
@@ -1444,7 +1448,7 @@ bool SPIFlash::writeShort(uint16_t page_number, uint8_t offset, int16_t data, bo
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeULong(uint32_t address, uint32_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeULong(uint32_t address, uint32_t data, bool errorCheck) {
   const uint8_t size = (sizeof(data));
 
 	if(!_prep(PAGEPROG, address, size)) {
@@ -1497,7 +1501,7 @@ bool SPIFlash::writeULong(uint32_t address, uint32_t data, bool errorCheck) {
   }
 }
 // Variant B
-bool SPIFlash::writeULong(uint16_t page_number, uint8_t offset, uint32_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeULong(uint16_t page_number, uint8_t offset, uint32_t data, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeULong(address, data, errorCheck);
@@ -1517,7 +1521,7 @@ bool SPIFlash::writeULong(uint16_t page_number, uint8_t offset, uint32_t data, b
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeLong(uint32_t address, int32_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeLong(uint32_t address, int32_t data, bool errorCheck) {
 const uint8_t size = sizeof(data);
 
 	if(!_prep(PAGEPROG, address, size)) {
@@ -1570,7 +1574,7 @@ const uint8_t size = sizeof(data);
   }
 }
 // Variant B
-bool SPIFlash::writeLong(uint16_t page_number, uint8_t offset, int32_t data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeLong(uint16_t page_number, uint8_t offset, int32_t data, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeLong(address, data, errorCheck);
@@ -1590,7 +1594,7 @@ bool SPIFlash::writeLong(uint16_t page_number, uint8_t offset, int32_t data, boo
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 // 			Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-bool SPIFlash::writeFloat(uint32_t address, float data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeFloat(uint32_t address, float data, bool errorCheck) {
   const uint8_t size = (sizeof(data));
 
   if(!_prep(PAGEPROG, address, size)) {
@@ -1642,7 +1646,7 @@ bool SPIFlash::writeFloat(uint32_t address, float data, bool errorCheck) {
   }
 }
 // Variant B
-bool SPIFlash::writeFloat(uint16_t page_number, uint8_t offset, float data, bool errorCheck) {
+bool SPIFlash_Marzogh::writeFloat(uint16_t page_number, uint8_t offset, float data, bool errorCheck) {
 	uint32_t address = _getAddress(page_number, offset);
 
 	return writeFloat(address, data, errorCheck);
@@ -1664,7 +1668,7 @@ bool SPIFlash::writeFloat(uint16_t page_number, uint8_t offset, float data, bool
 // This function first writes the size of the string as an unsigned int to the address to figure out the size of the String object stored and
 // then writes the String object data. Therefore it takes up two bytes more than the size of the String itself.
 // Variant A
-bool SPIFlash::writeStr(uint32_t address, String &inputStr, bool errorCheck) {
+bool SPIFlash_Marzogh::writeStr(uint32_t address, String &inputStr, bool errorCheck) {
   uint16_t inStrLen = inputStr.length() +1;
   if(!_prep(PAGEPROG, address, inStrLen)) {
     return false;
@@ -1728,7 +1732,7 @@ bool SPIFlash::writeStr(uint32_t address, String &inputStr, bool errorCheck) {
   }
 }
 // Variant B
-bool SPIFlash::writeStr(uint16_t page_number, uint8_t offset, String &inputStr, bool errorCheck) {
+bool SPIFlash_Marzogh::writeStr(uint16_t page_number, uint8_t offset, String &inputStr, bool errorCheck) {
   uint32_t address = _getAddress(page_number, offset);
   return writeStr(address, inputStr, errorCheck);
 }
@@ -1740,9 +1744,11 @@ bool SPIFlash::writeStr(uint16_t page_number, uint8_t offset, String &inputStr, 
 //	The sectors are numbered 0 - 255 containing 16 pages each.
 //			Page 0-15 --> Sector 0; Page 16-31 --> Sector 1;......Page 4080-4095 --> Sector 255
 // Variant A
-bool SPIFlash::eraseSector(uint32_t address) {
-	if(!_notBusy()||!_writeEnable())
+bool SPIFlash_Marzogh::eraseSector(uint32_t address) {
+	if(!_notBusy()||!_writeEnable()) {
+    Serial.println("LIB: !_notBusy || !_writeEnable");
  		return false;
+  }
 
 	_beginSPI(SECTORERASE);
 	_nextByte(address >> 16);
@@ -1750,18 +1756,20 @@ bool SPIFlash::eraseSector(uint32_t address) {
 	_nextByte(0);
   _endSPI();
 
-	if(!_notBusy(500L))
+	if(!_notBusy(500L)) {
+    Serial.println("LIB: !_notBusy(500L)");
 		return false;	//Datasheet says erasing a sector takes 400ms max
+  }
 
 		//_writeDisable(); //_writeDisable() is not required because the Write Enable Latch (WEL) flag is cleared to 0
 		// i.e. to write disable state upon the following conditions:
 		// Power-up, Write Disable, Page Program, Quad Page Program, ``Sector Erase``, Block Erase, Chip Erase, Write Status Register,
 		// Erase Security Register and Program Security register
-
+  Serial.println("LIB: Return True");
 	return true;
 }
 // Variant B
-bool SPIFlash::eraseSector(uint16_t page_number, uint8_t offset) {
+bool SPIFlash_Marzogh::eraseSector(uint16_t page_number, uint8_t offset) {
 	uint32_t address = _getAddress(page_number, offset);
 	return eraseSector(address);
 }
@@ -1772,7 +1780,7 @@ bool SPIFlash::eraseSector(uint16_t page_number, uint8_t offset) {
 //	The blocks are numbered 0 - 31 containing 128 pages each.
 // 			Page 0-127 --> Block 0; Page 128-255 --> Block 1;......Page 3968-4095 --> Block 31
 // Variant A
-bool SPIFlash::eraseBlock32K(uint32_t address) {
+bool SPIFlash_Marzogh::eraseBlock32K(uint32_t address) {
 	if(!_notBusy()||!_writeEnable()) {
  		return false;
   }
@@ -1793,7 +1801,7 @@ bool SPIFlash::eraseBlock32K(uint32_t address) {
 	return true;
 }
 // Variant B
-bool SPIFlash::eraseBlock32K(uint16_t page_number, uint8_t offset) {
+bool SPIFlash_Marzogh::eraseBlock32K(uint16_t page_number, uint8_t offset) {
 	uint32_t address = _getAddress(page_number, offset);
 	return eraseBlock32K(address);
 }
@@ -1804,7 +1812,7 @@ bool SPIFlash::eraseBlock32K(uint16_t page_number, uint8_t offset) {
 //	The blocks are numbered 0 - 15 containing 256 pages each.
 // 				Page 0-255 --> Block 0; Page 256-511 --> Block 1;......Page 3840-4095 --> Block 15
 //	Variant A
-bool SPIFlash::eraseBlock64K(uint32_t address) {
+bool SPIFlash_Marzogh::eraseBlock64K(uint32_t address) {
 	if(!_notBusy()||!_writeEnable()) {
  		return false;
   }
@@ -1825,13 +1833,13 @@ bool SPIFlash::eraseBlock64K(uint32_t address) {
 	return true;
 }
 //	Variant B
-bool SPIFlash::eraseBlock64K(uint16_t page_number, uint8_t offset) {
+bool SPIFlash_Marzogh::eraseBlock64K(uint16_t page_number, uint8_t offset) {
 	uint32_t address = _getAddress(page_number, offset);
 	return eraseBlock64K(address);
 }
 
 //Erases whole chip. Think twice before using.
-bool SPIFlash::eraseChip(void) {
+bool SPIFlash_Marzogh::eraseChip(void) {
 	if(!_notBusy()||!_writeEnable())
  		return false;
 
@@ -1854,7 +1862,7 @@ bool SPIFlash::eraseChip(void) {
 //Page Program, Write Status Register, Erase instructions are not allowed.
 //Erase suspend is only allowed during Block/Sector erase.
 //Program suspend is only allowed during Page/Quad Page Program
-bool SPIFlash::suspendProg(void) {
+bool SPIFlash_Marzogh::suspendProg(void) {
 	if(_notBusy() || !_noSuspend()) {
 		return false;
   }
@@ -1871,7 +1879,7 @@ bool SPIFlash::suspendProg(void) {
 }
 
 //Resumes previously suspended Block Erase/Sector Erase/Page Program.
-bool SPIFlash::resumeProg(void) {
+bool SPIFlash_Marzogh::resumeProg(void) {
 	if(!_notBusy() || _noSuspend())
 		return false;
 
@@ -1889,7 +1897,7 @@ bool SPIFlash::resumeProg(void) {
 //Puts device in low power state. Good for battery powered operations.
 //Typical current consumption during power-down is 1mA with a maximum of 5mA. (Datasheet 7.4)
 //In powerDown() the chip will only respond to powerUp()
-bool SPIFlash::powerDown(void) {
+bool SPIFlash_Marzogh::powerDown(void) {
 	if(!_notBusy(20))
 		return false;
 
@@ -1917,7 +1925,7 @@ bool SPIFlash::powerDown(void) {
 }
 
 //Wakes chip from low power state.
-bool SPIFlash::powerUp(void) {
+bool SPIFlash_Marzogh::powerUp(void) {
 	_beginSPI(RELEASE);
   _endSPI();
 	_delay_us(3);						    //Max release enable time according to the Datasheet

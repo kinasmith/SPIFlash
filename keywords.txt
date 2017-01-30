@@ -6,7 +6,7 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-SPIFlash	KEYWORD1
+SPIFlash_Marzogh	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

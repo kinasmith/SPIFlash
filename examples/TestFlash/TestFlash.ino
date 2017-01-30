@@ -1,7 +1,7 @@
 /*
   ----------------------------------------------------------------------------------------------------------------------------------
   |                                                            Winbond Flash                                                         |
-  |                                                      SPIFlash library test v2.4.0                                                |
+  |                                                      SPIFlash_Marzogh library test v2.4.0                                                |
   |----------------------------------------------------------------------------------------------------------------------------------|
   |                                                                Marzogh                                                           |
   |                                                              11.09.2016                                                          |
@@ -66,7 +66,7 @@
 
 
 
-#include<SPIFlash.h>
+#include<SPIFlash_Marzogh.h>
 uint8_t pageBuffer[256];
 String serialCommand;
 char printBuffer[128];
@@ -80,7 +80,7 @@ String inputString, outputString;
 #define Serial SERIAL_PORT_USBVIRTUAL
 #endif
 
-SPIFlash flash;
+SPIFlash_Marzogh flash;
 
 void setup() {
   delay(10);
@@ -561,7 +561,7 @@ void printLine()
 
 void printSplash()
 {
-  Serial.println(F("                                                        SPIFlash library test                                                     "));
+  Serial.println(F("                                                        SPIFlash_Marzogh library test                                                     "));
 }
 
 void printNextCMD()

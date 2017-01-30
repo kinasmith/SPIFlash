@@ -1,8 +1,8 @@
-/* Arduino SPIFlash Library v.2.5.0
+/* Arduino SPIFlash_Marzogh Library v.2.5.0
  * Copyright (C) 2015 by Prajwal Bhattaram
  * Modified by Prajwal Bhattaram - 13/11/2016
  *
- * This file is part of the Arduino SPIFlash Library. This library is for
+ * This file is part of the Arduino SPIFlash_Marzogh Library. This library is for
  * Winbond NOR flash memory modules. In its current form it enables reading
  * and writing individual data variables, structs and arrays from and to various locations;
  * reading and writing pages; continuous read functions; sector, block and chip erase;
@@ -19,7 +19,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License v3.0
- * along with the Arduino SPIFlash Library.  If not, see
+ * along with the Arduino SPIFlash_Marzogh Library.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
 

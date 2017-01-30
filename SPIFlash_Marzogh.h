@@ -1,8 +1,8 @@
-/* Arduino SPIFlash Library v.2.5.0
+/* Arduino SPIFlash_Marzogh Library v.2.5.0
  * Copyright (C) 2015 by Prajwal Bhattaram
  * Modified by Prajwal Bhattaram - 13/11/2016
  *
- * This file is part of the Arduino SPIFlash Library. This library is for
+ * This file is part of the Arduino SPIFlash_Marzogh Library. This library is for
  * Winbond NOR flash memory modules. In its current form it enables reading
  * and writing individual data variables, structs and arrays from and to various locations;
  * reading and writing pages; continuous read functions; sector, block and chip erase;
@@ -19,12 +19,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License v3.0
- * along with the Arduino SPIFlash Library.  If not, see
+ * along with the Arduino SPIFlash_Marzogh Library.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SPIFLASH_H
-#define SPIFLASH_H
+#ifndef SPIFLASH_MARZOGH_H
+#define SPIFLASH_MARZOGH_H
 
 #if defined (ARDUINO_ARCH_SAM)
   #include <malloc.h>
@@ -88,10 +88,10 @@
   //char *ramend=(char *)0x20088000;
 #endif
 
-class SPIFlash {
+class SPIFlash_Marzogh {
 public:
   //----------------------------------------------Constructor-----------------------------------------------//
-  SPIFlash(uint8_t cs = CS, bool overflow = true);
+  SPIFlash_Marzogh(uint8_t cs = CS, bool overflow = true);
   //----------------------------------------Initial / Chip Functions----------------------------------------//
   void     begin(void);
   void     setClock(uint32_t clockSpeed);
@@ -168,6 +168,7 @@ public:
   bool     eraseBlock64K(uint32_t address);
   bool     eraseBlock64K(uint16_t page_number, uint8_t offset);
   bool     eraseChip(void);
+  // bool     _writeEnable(uint32_t timeout = 10L);
   //---------------------------------------------Power functions--------------------------------------------//
   bool     suspendProg(void);
   bool     resumeProg(void);
@@ -265,7 +266,7 @@ private:
 // WARNING: You can only write to previously erased memory locations (see datasheet).
 //      Use the eraseSector()/eraseBlock32K/eraseBlock64K commands to first clear memory (write 0xFFs)
 // Variant A
-template <class T> bool SPIFlash::writeAnything(uint32_t address, const T& value, bool errorCheck) {
+template <class T> bool SPIFlash_Marzogh::writeAnything(uint32_t address, const T& value, bool errorCheck) {
   if (!_prep(PAGEPROG, address, sizeof(value))) {
     return false;
   }
@@ -317,7 +318,7 @@ template <class T> bool SPIFlash::writeAnything(uint32_t address, const T& value
   }
 }
 // Variant B
-template <class T> bool SPIFlash::writeAnything(uint16_t page_number, uint8_t offset, const T& value, bool errorCheck) {
+template <class T> bool SPIFlash_Marzogh::writeAnything(uint16_t page_number, uint8_t offset, const T& value, bool errorCheck) {
   uint32_t address = _getAddress(page_number, offset);
   return writeAnything(address, value, errorCheck);
 }
@@ -334,7 +335,7 @@ template <class T> bool SPIFlash::writeAnything(uint16_t page_number, uint8_t of
 //    3. T& value --> Variable to return data into
 //    3. fastRead --> defaults to false - executes _beginFastRead() if set to true
 // Variant A
-template <class T> bool SPIFlash::readAnything(uint32_t address, T& value, bool fastRead) {
+template <class T> bool SPIFlash_Marzogh::readAnything(uint32_t address, T& value, bool fastRead) {
   if (!_prep(READDATA, address, sizeof(value)))
     return false;
 
@@ -350,14 +351,14 @@ template <class T> bool SPIFlash::readAnything(uint32_t address, T& value, bool 
   return true;
 }
 // Variant B
-template <class T> bool SPIFlash::readAnything(uint16_t page_number, uint8_t offset, T& value, bool fastRead)
+template <class T> bool SPIFlash_Marzogh::readAnything(uint16_t page_number, uint8_t offset, T& value, bool fastRead)
 {
   uint32_t address = _getAddress(page_number, offset);
   return readAnything(address, value, fastRead);
 }
 
 // Private template to check for errors in writing to flash memory
-template <class T> bool SPIFlash::_writeErrorCheck(uint32_t address, const T& value) {
+template <class T> bool SPIFlash_Marzogh::_writeErrorCheck(uint32_t address, const T& value) {
 if (!_prep(READDATA, address, sizeof(value)) && !_notBusy()) {
   return false;
 }
