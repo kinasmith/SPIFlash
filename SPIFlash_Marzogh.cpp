@@ -564,7 +564,13 @@ void SPIFlash_Marzogh::_troubleshoot(void) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 //Identifies chip and establishes parameters
-void SPIFlash_Marzogh::begin(void) {
+void SPIFlash_Marzogh::begin(uint8_t cs) {
+  csPin = cs;
+#ifndef __AVR_ATtiny85__
+  cs_port = portOutputRegister(digitalPinToPort(csPin));
+#endif
+  cs_mask = digitalPinToBitMask(csPin);
+  pinMode(csPin, OUTPUT);
 #if defined (ARDUINO_ARCH_SAM)
   _dueSPIBegin();
 #else

@@ -93,7 +93,7 @@ public:
   //----------------------------------------------Constructor-----------------------------------------------//
   SPIFlash_Marzogh(uint8_t cs = CS, bool overflow = true);
   //----------------------------------------Initial / Chip Functions----------------------------------------//
-  void     begin(void);
+  void     begin(uint8_t cs = CS);
   void     setClock(uint32_t clockSpeed);
   bool     libver(uint8_t *b1, uint8_t *b2, uint8_t *b3);
   uint8_t  error(void);

@@ -40,7 +40,7 @@
 #define BLOCK32ERASE 0x52
 #define CHIPERASE    0xC7
 #define SUSPEND      0x75
-#define ID           0x90
+// #define ID           0x90 //Note...I couldn't find this being used anywhere in the library. and it conflicted with RFM69 library
 #define RESUME       0x7A
 #define JEDECID      0x9F
 #define RELEASE      0xAB
